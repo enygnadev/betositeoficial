@@ -1052,6 +1052,7 @@ const Dashboard = () => {
                         <span>{doc.nomevendedor}</span>
                         <span>•</span>
                         <DateRange fontSize="small" />
+                        <span>{doc.produtosSelecionados}</span>
                         <span>{formatDate(doc.dataCriacao)}</span>
                         <Thumbnails urls={doc.imagemUrls} />
                       </div>
