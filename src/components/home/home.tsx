@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import { useState, useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   AppBar,
@@ -19,7 +19,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Paper,
   Chip
 } from '@material-ui/core';
@@ -36,8 +35,6 @@ import Lock from '@material-ui/icons/Lock';
 import ExitToApp from '@material-ui/icons/ExitToApp';
 import VpnKey from '@material-ui/icons/VpnKey';
 import ViewModule from '@material-ui/icons/ViewModule';
-import AccountBalance from '@material-ui/icons/AccountBalance';
-import { useRouter } from 'next/router';
 import { FaWhatsapp } from 'react-icons/fa';
 import Link from 'next/link';
 import AutenticacaoContext from '@/data/contexts/AutenticacaoContext';
@@ -322,34 +319,6 @@ export default function ResponsiveAppBar() {
   const [contactDialog, setContactDialog] = useState(false);
   const { usuario, logout } = useContext(AutenticacaoContext);
   const { hasAreaAccess } = usePermissions();
-  const router = useRouter();
-
-  // Monitorar eventos de roteamento para depuração e fechamento do drawer
-  useEffect(() => {
-    console.log('Router inicializado, isReady:', router.isReady);
-    const handleRouteChangeStart = (url: string) => {
-      console.log('Iniciando navegação para:', url);
-      setDrawerOpen(false);
-    };
-    const handleRouteChangeComplete = (url: string) => {
-      console.log('Navegação concluída para:', url);
-    };
-    const handleRouteChangeError = (err: Error, url: string) => {
-      console.error('Erro na navegação para:', url, err);
-      // Forçar reload completo como solução alternativa para falhas de hidratação
-      window.location.href = url;
-    };
-
-    router.events.on('routeChangeStart', handleRouteChangeStart);
-    router.events.on('routeChangeComplete', handleRouteChangeComplete);
-    router.events.on('routeChangeError', handleRouteChangeError);
-
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChangeStart);
-      router.events.off('routeChangeComplete', handleRouteChangeComplete);
-      router.events.off('routeChangeError', handleRouteChangeError);
-    };
-  }, [router]);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -426,27 +395,6 @@ export default function ResponsiveAppBar() {
     }] : [])
   ];
 
-  const handleNavigation = (path: string) => {
-    console.log(`Tentando navegar para: ${path}, router.isReady: ${router.isReady}`);
-    if (router.isReady) {
-      router.push(path).catch((err) => {
-        console.error(`Erro ao navegar para ${path}:`, err);
-        // Forçar reload completo como solução alternativa
-        window.location.href = path;
-      });
-      setDrawerOpen(false);
-    } else {
-      console.warn('Router não está pronto, tentando novamente após 500ms');
-      setTimeout(() => {
-        router.push(path).catch((err) => {
-          console.error(`Erro ao navegar para ${path} após espera:`, err);
-          window.location.href = path;
-        });
-        setDrawerOpen(false);
-      }, 500);
-    }
-  };
-
   const renderDrawerContent = () => (
     <Box className={classes.drawerContent}>
       <Box className={classes.drawerHeader}>
@@ -508,14 +456,16 @@ export default function ResponsiveAppBar() {
             ── ou ──
           </Typography>
 
-          <Button
-            startIcon={<ViewModule />}
-            className={classes.loginButton}
-            onClick={() => handleNavigation('/servicos')}
-            fullWidth
-          >
-            Ver Todos Serviços
-          </Button>
+          <Link href="/servicos" passHref>
+            <Button
+              startIcon={<ViewModule />}
+              className={classes.loginButton}
+              onClick={() => setDrawerOpen(false)}
+              fullWidth
+            >
+              Ver Todos Serviços
+            </Button>
+          </Link>
 
           <Button
             startIcon={<FaWhatsapp />}
@@ -548,8 +498,9 @@ export default function ResponsiveAppBar() {
                     {isAuthenticated ? (
                       <ListItem 
                         button 
-                        onClick={() => item.path ? handleNavigation(item.path) : toggleSection(`${sectionIndex}-${itemIndex}`)}
+                        onClick={() => item.path ? setDrawerOpen(false) : toggleSection(`${sectionIndex}-${itemIndex}`)}
                         className={`${classes.menuItem} ${classes.menuItemAuthenticated}`}
+                        {...(item.path ? { component: Link, href: item.path } : {})}
                       >
                         <ListItemIcon className={classes.menuItemIcon}>
                           {item.icon}
@@ -584,20 +535,21 @@ export default function ResponsiveAppBar() {
                     <Collapse in={isAuthenticated && !!expandedSections[`${sectionIndex}-${itemIndex}`]} timeout="auto" unmountOnExit>
                       <List component="div" disablePadding>
                         {item.subItems.map((subItem, subIndex) => (
-                          <ListItem 
-                            button 
-                            className={classes.subMenuItem}
-                            onClick={() => handleNavigation(subItem.path)}
-                            key={subIndex}
-                          >
-                            <ListItemIcon className={classes.subMenuItemIcon}>
-                              <Assignment />
-                            </ListItemIcon>
-                            <ListItemText 
-                              primary={subItem.text} 
-                              className={classes.subMenuItemText}
-                            />
-                          </ListItem>
+                          <Link href={subItem.path} passHref key={subIndex}>
+                            <ListItem 
+                              button 
+                              className={classes.subMenuItem}
+                              onClick={() => setDrawerOpen(false)}
+                            >
+                              <ListItemIcon className={classes.subMenuItemIcon}>
+                                <Assignment />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={subItem.text} 
+                                className={classes.subMenuItemText}
+                              />
+                            </ListItem>
+                          </Link>
                         ))}
                       </List>
                     </Collapse>
@@ -616,26 +568,28 @@ export default function ResponsiveAppBar() {
                     );
 
                     return hasAccess ? (
-                      <ListItem 
-                        button 
-                        className={`${classes.menuItem} ${classes.menuItemAuthenticated}`}
-                        onClick={() => handleNavigation(item.path || '/')}
-                      >
-                        <ListItemIcon className={classes.menuItemIcon}>
-                          {item.icon}
-                        </ListItemIcon>
-                        <ListItemText 
-                          primary={item.text} 
-                          className={classes.menuItemText}
-                        />
-                        {item.status && (
-                          <Box className={classes.statusBadge}>
-                            <Typography variant="caption" className={classes.statusText}>
-                              {item.status}
-                            </Typography>
-                          </Box>
-                        )}
-                      </ListItem>
+                      <Link href={item.path || '/'} passHref>
+                        <ListItem 
+                          button 
+                          className={`${classes.menuItem} ${classes.menuItemAuthenticated}`}
+                          onClick={() => setDrawerOpen(false)}
+                        >
+                          <ListItemIcon className={classes.menuItemIcon}>
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={item.text} 
+                            className={classes.menuItemText}
+                          />
+                          {item.status && (
+                            <Box className={classes.statusBadge}>
+                              <Typography variant="caption" className={classes.statusText}>
+                                {item.status}
+                              </Typography>
+                            </Box>
+                          )}
+                        </ListItem>
+                      </Link>
                     ) : (
                       <ListItem className={`${classes.menuItem} ${classes.lockedItem}`}>
                         <ListItemIcon className={classes.menuItemIcon}>
@@ -666,20 +620,34 @@ export default function ResponsiveAppBar() {
               ...(hasEmpresarialAccess ? [{ icon: <Business />, label: "Área Empresarial", path: "/beto/empresas" }] : []),
               ...(hasColaboradorAccess ? [{ icon: <Dashboard />, label: "Colaboradores", path: "/colaboradores" }] : [])
             ].map((btn: ActionButton, index) => (
-              <Button
-                key={index}
-                startIcon={btn.icon}
-                className={classes.actionButton}
-                style={btn.color ? { 
-                  background: `linear-gradient(45deg, ${btn.color} 30%, ${btn.color}dd 90%)`,
-                  color: '#fff'
-                } : {}}
-                onClick={() => btn.path ? handleNavigation(btn.path) : setContactDialog(true)}
-                aria-label={btn.label}
-                fullWidth
-              >
-                {btn.label}
-              </Button>
+              btn.path ? (
+                <Link href={btn.path} passHref key={index}>
+                  <Button
+                    startIcon={btn.icon}
+                    className={classes.actionButton}
+                    onClick={() => setDrawerOpen(false)}
+                    aria-label={btn.label}
+                    fullWidth
+                  >
+                    {btn.label}
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  key={index}
+                  startIcon={btn.icon}
+                  className={classes.actionButton}
+                  style={{
+                    background: `linear-gradient(45deg, ${btn.color} 30%, ${btn.color}dd 90%)`,
+                    color: '#fff'
+                  }}
+                  onClick={() => setContactDialog(true)}
+                  aria-label={btn.label}
+                  fullWidth
+                >
+                  {btn.label}
+                </Button>
+              )
             ))}
             <Divider style={{ margin: "28px 0", background: "#4a7c5944" }} />
             <Button
