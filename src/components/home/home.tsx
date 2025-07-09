@@ -696,12 +696,7 @@ export default function ResponsiveAppBar() {
           >
             <MenuIcon />
           </IconButton>
-          <Box className={classes.logoContainer}>
-            <Avatar className={classes.logoAvatar}>DB</Avatar>
-            <Typography variant="h6" className={classes.logoText}>
-              Despachante Beto Dehon
-            </Typography>
-          </Box>
+        
         </Toolbar>
       </AppBar>
 
