@@ -45,15 +45,25 @@ const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
   },
-  appBar: {
-    background: 'none',
-    color: '#000',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-    color: '#ffffff',
-  },
+ appBar: {
+  backgroundColor: 'transparent !important',
+  boxShadow: 'none !important',
+  backdropFilter: 'none !important',
+  border: 'none !important',
+  position: 'absolute', // opcional, se quiser flutuar sobre o conteúdo
+},
+
+menuButton: {
+  marginRight: theme.spacing(8),
+  color: '#2d5a3d',
+  backgroundColor: '#fff',
+  zIndex: 1001,
+  padding: theme.spacing(2.0), // aumenta a área do botão
+  fontSize: '4rem', // força o ícone maior se necessário
+},
+
+
+
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
