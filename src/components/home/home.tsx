@@ -324,15 +324,30 @@ export default function ResponsiveAppBar() {
   const { hasAreaAccess } = usePermissions();
   const router = useRouter();
 
-  // Fechar o drawer quando a rota muda
+  // Monitorar eventos de roteamento para depuração e fechamento do drawer
   useEffect(() => {
-    const handleRouteChange = () => {
+    console.log('Router inicializado, isReady:', router.isReady);
+    const handleRouteChangeStart = (url: string) => {
+      console.log('Iniciando navegação para:', url);
       setDrawerOpen(false);
     };
+    const handleRouteChangeComplete = (url: string) => {
+      console.log('Navegação concluída para:', url);
+    };
+    const handleRouteChangeError = (err: Error, url: string) => {
+      console.error('Erro na navegação para:', url, err);
+      // Forçar reload completo como solução alternativa para falhas de hidratação
+      window.location.href = url;
+    };
 
-    router.events.on('routeChangeStart', handleRouteChange);
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
+    router.events.on('routeChangeError', handleRouteChangeError);
+
     return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
+      router.events.off('routeChangeError', handleRouteChangeError);
     };
   }, [router]);
 
@@ -412,8 +427,24 @@ export default function ResponsiveAppBar() {
   ];
 
   const handleNavigation = (path: string) => {
-    router.push(path);
-    setDrawerOpen(false);
+    console.log(`Tentando navegar para: ${path}, router.isReady: ${router.isReady}`);
+    if (router.isReady) {
+      router.push(path).catch((err) => {
+        console.error(`Erro ao navegar para ${path}:`, err);
+        // Forçar reload completo como solução alternativa
+        window.location.href = path;
+      });
+      setDrawerOpen(false);
+    } else {
+      console.warn('Router não está pronto, tentando novamente após 500ms');
+      setTimeout(() => {
+        router.push(path).catch((err) => {
+          console.error(`Erro ao navegar para ${path} após espera:`, err);
+          window.location.href = path;
+        });
+        setDrawerOpen(false);
+      }, 500);
+    }
   };
 
   const renderDrawerContent = () => (
@@ -713,7 +744,7 @@ export default function ResponsiveAppBar() {
           <Typography variant="body1" gutterBottom style={{ fontFamily: '"Playfair Display", "Georgia", serif' }}>
             {isAuthenticated 
               ? 'Entre em contato conosco pelo WhatsApp para esclarecimentos e atendimento personalizado.'
-              : 'Para ter acesso ao sistema do Despachante Beto Dheon, entre em contato conosco pelo WhatsApp. Nossa equipe irá criar suas credenciais de acesso.'
+              : 'Para ter acesso ao sistema do Despachante Beto Dehon, entre em contato conosco pelo WhatsApp. Nossa equipe irá criar suas credenciais de acesso.'
             }
           </Typography>
           <Paper elevation={2} style={{ 
@@ -752,8 +783,8 @@ export default function ResponsiveAppBar() {
             startIcon={<FaWhatsapp />}
             onClick={() => {
               const message = isAuthenticated 
-                ? 'Olá! Gostaria de informações sobre os serviços do Despachante Beto Dheon.'
-                : 'Olá! Gostaria de solicitar acesso ao sistema do Despachante Beto Dheon. Preciso criar uma conta para utilizar os serviços online.';
+                ? 'Olá! Gostaria de informações sobre os serviços do Despachante Beto Dehon.'
+                : 'Olá! Gostaria de solicitar acesso ao sistema do Despachante Beto Dehon. Preciso criar uma conta para utilizar os serviços online.';
               window.open(`https://wa.me/5511999999999?text=${encodeURIComponent(message)}`, '_blank');
               setContactDialog(false);
             }}
