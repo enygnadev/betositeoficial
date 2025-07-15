@@ -18,6 +18,7 @@ import { Timestamp } from 'firebase/firestore';
 import { query, where } from 'firebase/firestore';
 import {Thumbnails} from '@/components/enterprises/betodespa/transferencia/thumbnails';
 
+import Forcaautenticacao from '@/components/autenticacao/ForcarAutenticacao';
 const db = getFirestore(app);
 
 interface Stats {
@@ -959,6 +960,7 @@ const Dashboard = () => {
 
 
   return (
+    <Forcaautenticacao>
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <Container maxWidth="xl">
@@ -1209,6 +1211,7 @@ const Dashboard = () => {
         </Container>
       </div>
     </ThemeProvider>
+    </Forcaautenticacao>
   );
 };
 
