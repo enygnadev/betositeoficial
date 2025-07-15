@@ -5,6 +5,7 @@ import {
   FaFileAlt, FaTachometerAlt, FaBars, FaPhone, FaChartPie, FaUserTie,
   FaStore, FaCrown, FaTrophy, FaStar, FaGem, FaMagic, FaRocket, FaCog, FaCopy, FaChevronDown
 } from 'react-icons/fa';
+import Forcaautenticacao from '@/components/autenticacao/ForcarAutenticacao';
 
 interface MenuItem {
   href: string;
@@ -82,6 +83,7 @@ const NavigationButtons: React.FC = memo(() => {
   ];
 
   return (
+    <Forcaautenticacao>
     <div className="min-h-screen bg-gradient-to-b from-zinc-100 via-white to-zinc-200 font-['Playfair_Display','Poppins']">
       {/* Toast de Copiado */}
       {showToast && (
@@ -183,6 +185,7 @@ const NavigationButtons: React.FC = memo(() => {
         </div>
       </div>
     </div>
+      <Forcaautenticacao/>
   );
 });
 
