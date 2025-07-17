@@ -4,11 +4,13 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Button, TextField, Typography, Select, MenuItem,
-  Table, TableHead, TableRow, TableCell, TableBody, IconButton,
-  Paper, useMediaQuery, Grid
+  IconButton, Paper, useMediaQuery, Grid, Card, CardContent, Dialog,
+  DialogTitle, DialogContent, DialogActions
 } from '@material-ui/core';
-import { Delete } from '@material-ui/icons';
-import { collection, addDoc, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { Delete, Edit } from '@material-ui/icons';
+import {
+  collection, addDoc, getDocs, deleteDoc, doc, Timestamp, updateDoc
+} from 'firebase/firestore';
 import { db } from '@/logic/firebase/config/app';
 import Forcaautenticacao from '@/components/autenticacao/ForcarAutenticacao';
 
@@ -22,13 +24,26 @@ export default function DashboardCodigos() {
   const [codigoManual, setCodigoManual] = useState('');
   const [observacao, setObservacao] = useState('');
   const [codigos, setCodigos] = useState<any[]>([]);
-  const [carregando, setCarregando] = useState(false);
   const [filtro, setFiltro] = useState('');
+  const [editando, setEditando] = useState<any | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const carregarCodigos = async () => {
     const querySnapshot = await getDocs(collection(db, 'CodigosDeAcesso'));
-    setCodigos(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const agora = new Date();
+
+    const ativos: any[] = [];
+    for (const docSnap of querySnapshot.docs) {
+      const data = docSnap.data();
+      const expira = data.expiraEm?.toDate?.();
+
+      if (data.tipo === 'temporario' && expira && expira <= agora) {
+        await deleteDoc(doc(db, 'CodigosDeAcesso', docSnap.id));
+      } else {
+        ativos.push({ id: docSnap.id, ...data });
+      }
+    }
+    setCodigos(ativos);
   };
 
   useEffect(() => {
@@ -70,16 +85,53 @@ export default function DashboardCodigos() {
     }
   };
 
+  const salvarEdicao = async () => {
+    if (editando) {
+      await updateDoc(doc(db, 'CodigosDeAcesso', editando.id), { observacao: editando.observacao });
+      setEditando(null);
+      carregarCodigos();
+    }
+  };
+
   const codigosFiltrados = codigos.filter(c =>
     c.codigo.toLowerCase().includes(filtro.toLowerCase()) ||
     (c.observacao || '').toLowerCase().includes(filtro.toLowerCase())
   );
 
+  const renderCards = (tipo: 'temporario' | 'permanente') => (
+    <Box mt={4}>
+      <Typography variant="h6" gutterBottom>
+        {tipo === 'temporario' ? 'Acessos Temporários' : 'Acessos Permanentes'}
+      </Typography>
+      <Grid container spacing={2}>
+        {codigosFiltrados.filter(c => c.tipo === tipo).slice(0, 10).map(c => (
+          <Grid item xs={12} sm={6} md={4} key={c.id}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6">🔐 {c.codigo}</Typography>
+                <Typography variant="body2">
+                  {tipo === 'temporario' && c.expiraEm?.toDate?.().toLocaleString() || 'Permanente'}
+                </Typography>
+                <Typography variant="body1" color="textSecondary">
+                  🧑 {c.observacao || 'Sem observação'}
+                </Typography>
+                <Box mt={1} display="flex" justifyContent="space-between">
+                  <IconButton onClick={() => setEditando(c)}><Edit /></IconButton>
+                  <IconButton onClick={() => excluirCodigo(c.id)}><Delete color="error" /></IconButton>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  );
+
   return (
     <Forcaautenticacao>
       <Box p={2} bgcolor="#f5f7fa" minHeight="100vh" display="flex" justifyContent="center" alignItems="center">
-        <Box maxWidth={1200} width="100%" display="flex" justifyContent="center">
-          <Paper elevation={4} style={{ padding: 32, borderRadius: 24, backgroundColor: '#ffffff', width: '100%' }}>
+        <Box maxWidth={1200} width="100%">
+          <Paper elevation={4} style={{ padding: 32, borderRadius: 24, backgroundColor: '#ffffff' }}>
             <Typography variant="h4" gutterBottom align="center" style={{ color: '#2d5a3d', fontWeight: 700 }}>
               🎯 Painel de Códigos de Acesso
             </Typography>
@@ -135,32 +187,24 @@ export default function DashboardCodigos() {
               </Grid>
             </Grid>
 
-            <Box mt={5}>
-              <Table size={isMobile ? 'small' : 'medium'}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Código</strong></TableCell>
-                    <TableCell>Tipo</TableCell>
-                    <TableCell>Validade</TableCell>
-                    <TableCell>Observação</TableCell>
-                    <TableCell>Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {codigosFiltrados.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell>{c.codigo}</TableCell>
-                      <TableCell>{c.tipo}</TableCell>
-                      <TableCell>{c.tipo === 'temporario' && c.expiraEm?.toDate?.().toLocaleString() || 'Permanente'}</TableCell>
-                      <TableCell>{c.observacao || '-'}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={() => excluirCodigo(c.id)}><Delete color="error" /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
+            {renderCards('temporario')}
+            {renderCards('permanente')}
+
+            <Dialog open={!!editando} onClose={() => setEditando(null)}>
+              <DialogTitle>Editar Observação</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Observação"
+                  value={editando?.observacao || ''}
+                  onChange={(e) => setEditando({ ...editando, observacao: e.target.value })}
+                  fullWidth
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setEditando(null)}>Cancelar</Button>
+                <Button color="primary" onClick={salvarEdicao}>Salvar</Button>
+              </DialogActions>
+            </Dialog>
           </Paper>
         </Box>
       </Box>
