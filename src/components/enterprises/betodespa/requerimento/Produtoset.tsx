@@ -62,7 +62,7 @@ const Produtoset: React.FC = () => {
   
     
       <ListPost setItems={(items) => addItem} />
-      <ItemList items={items} />
+     
      
     </>
   );
