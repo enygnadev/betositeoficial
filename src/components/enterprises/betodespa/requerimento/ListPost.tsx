@@ -637,7 +637,7 @@ const tutorialSteps = [
   },
 ];
 
-const ListPost: React.FC<{ setItems: React.Dispatch<React.SetStateAction<Item[]>> }> = ({ setItems }) => {
+const ListPost: React.FC<{ setItems: React.Dispatch<React.SetStateAction<Item[]>>, onItemEnviado?: () => void }> = ({ setItems, onItemEnviado }) => {
   const classes = useStyles();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('xs'), { noSsr: true });
@@ -993,6 +993,7 @@ await addDoc(collection(db, 'OrdensDeServicoBludata'), jsonSGDW);
   
       setTimeout(() => {
         alert('Item adicionado com sucesso! Os dados foram salvos.');
+         if (onItemEnviado) onItemEnviado();
       }, 5000);
     } catch (error) {
       console.error('Erro ao adicionar item:', error);
