@@ -9,6 +9,7 @@ import {
 import { Delete, Edit } from '@material-ui/icons';
 import { collection, addDoc, getDocs, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '@/logic/firebase/config/app';
+import Forcaautenticacao from '@/components/autenticacao/ForcarAutenticacao';
 
 const gerarCodigoAleatorio = (length = 8) => {
   const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -64,6 +65,7 @@ export default function DashboardCodigos() {
   };
 
   return (
+     <Forcaautenticacao>
     <Box p={4}>
       <Typography variant="h4" gutterBottom>Códigos de Acesso</Typography>
 
@@ -117,5 +119,6 @@ export default function DashboardCodigos() {
         </Table>
       </Box>
     </Box>
+        </Forcaautenticacao>
   );
 }
