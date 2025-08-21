@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "vercel-build": "npm ci --no-audit --no-fund --prefer-offline || npm install --no-audit --no-fund --prefer-offline"
+    "vercel-build": "npm install --no-audit --no-fund --prefer-offline --legacy-peer-deps && next build"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
@@ -101,5 +101,8 @@
   "license": "MIT",
   "overrides": {
     "react-leaflet": "4.2.1"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
