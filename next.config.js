@@ -1,26 +1,25 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   generateEtags: false,
-  
+
   images: {
     unoptimized: true,
     domains: [
       'source.unsplash.com',
       'images.unsplash.com',
       'lh3.googleusercontent.com',
-      'firebasestorage.googleapis.com'
-    ]
+      'firebasestorage.googleapis.com',
+    ],
   },
-  
+
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  
+
   swcMinify: true,
-  
+
   // Security headers
   async headers() {
     return [
@@ -29,25 +28,36 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          }
-        ]
-      }
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
     ];
   },
-  
+
+  // Redirects
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        destination: 'https://atpv.despachantebeto.com.br/:path*',
+        permanent: true, // 308 Redirect (SEO-friendly)
+      },
+    ];
+  },
+
   // Environment variables validation
   env: {
     CUSTOM_KEY: process.env.NODE_ENV,
-  }
-}
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
