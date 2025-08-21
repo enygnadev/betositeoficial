@@ -7,6 +7,8 @@ import { ThemeProvider as MuiThemeProvider, makeStyles } from '@material-ui/core
 import CssBaseline from '@material-ui/core/CssBaseline';
 import muiTheme from '@/theme';
 import type { AppProps } from 'next/app';
+import 'leaflet/dist/leaflet.css';
+
 
 import MenuTopBeto from '@/components/home/home';
 
